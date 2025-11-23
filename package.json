@@ -1,0 +1,11 @@
+{
+  "name": "code-review-agent",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "review": "node review.js"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}
