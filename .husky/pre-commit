@@ -1,6 +1,4 @@
-#!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
+#!/usr/bin/env sh
 
 echo "Running AI code review (Ollama)..."
 npm run review
-echo "AI code review completed."

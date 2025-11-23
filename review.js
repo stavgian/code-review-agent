@@ -1,11 +1,8 @@
 import fetch from 'node-fetch';
-import { spawnSync } from 'node:child_process';
+import { spawnSync } from 'child_process';
 
-// 1. Get git diff (staged changes)
 function getGitDiff() {
-  const result = spawnSync('git', ['diff', '--cached'], {
-    encoding: 'utf-8'
-  });
+  const result = spawnSync('git', ['diff', '--cached'], { encoding: 'utf-8' });
 
   if (result.status !== 0) {
     console.error('Failed to run git diff:', result.stderr);
@@ -13,82 +10,57 @@ function getGitDiff() {
   }
 
   const diff = result.stdout.trim();
+
   if (!diff) {
-    console.log('No staged changes to review.');
+    console.log('No staged changes to review.\nUse: git add <files>');
     process.exit(0);
   }
 
   return diff;
 }
 
-// 2. Call Ollama
-async function callOllama(diff, model = 'llama3.1') {
-  const url = 'http://localhost:11434/api/chat';
+async function callOllama(diff) {
+  const system = `
+You are a senior software engineer.
+Perform a strict code review on the user's git diff.
+Return structured output.
 
-  const systemPrompt = `
-You are a senior software engineer doing a code review.
-Be concise and structured. Focus on:
-- correctness
-- readability
-- potential bugs
-- tests
-- architecture
-
-Respond in this format:
+Format:
 
 Summary:
 - ...
 
 Issues:
-1) [SEVERITY] Short title
-   - Detail
+1) [SEVERITY] Title
+   - Details
 
 Suggestions:
 - ...
-`.trim();
-
-  const userPrompt = `
-Please review the following git diff:
-
-${diff}
-`.trim();
+`;
 
   const body = {
-    model,
+    model: "llama3.1",
+    stream: false,
     messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt }
-    ],
-    stream: false
+      { role: "system", content: system },
+      { role: "user", content: "Review this git diff:\n\n" + diff }
+    ]
   };
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+  const res = await fetch("http://localhost:11434/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body)
   });
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Ollama error: ${response.status} ${text}`);
-  }
-
-  const json = await response.json();
-  return json.message?.content || '(no content)';
+  const json = await res.json();
+  return json.message?.content || "(no response)";
 }
 
-// 3. Main
 (async () => {
-  try {
-    const diff = getGitDiff();
-    console.log('Sending diff to Ollama for review...\n');
+  const diff = getGitDiff();
+  const review = await callOllama(diff);
 
-    const review = await callOllama(diff);
-
-    console.log('=== CODE REVIEW ===\n');
-    console.log(review);
-  } catch (err) {
-    console.error('Error:', err.message || err);
-    process.exit(1);
-  }
+  console.log("\n=== CODE REVIEW ===\n");
+  console.log(review);
 })();
