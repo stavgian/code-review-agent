@@ -3,9 +3,15 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "review": "node review.js"
+    "setup:ollama": "ollama pull llama3.1",
+    "review": "node review.js",
+    "review:all": "git add . && npm run review",
+    "prepare": "husky"
   },
   "dependencies": {
     "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
   }
 }
