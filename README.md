@@ -25,7 +25,7 @@ https://ollama.com/download
 Clone this repository:
 
 ```bash
-git clone https://github.com/<your-username>/code-review-agent.git
+git clone https://github.com/stavgian/code-review-agent.git
 cd code-review-agent
 npm install
 ```
